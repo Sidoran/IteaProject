@@ -10,6 +10,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using IteaProject.Models.Database;
+using Microsoft.EntityFrameworkCore;
+using IteaProject.Services.Interfaces;
+using IteaProject.Models.Entities;
+using IteaProject.Services;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace IteaProject
 {
@@ -25,7 +32,19 @@ namespace IteaProject
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddDbContext<ProjectDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("SqlConnectionString")));
+
+            services.AddTransient<IService<RunBook>, RunBookService>();
+            services.AddTransient<IService<RunTask>, RunTaskService>();
+            services.AddTransient<IService<Agent>, AgentService>();
+            services.AddTransient<IService<Event>, EventService>();
+
+            services.AddMvc(options => { options.AllowEmptyInputInBodyModelBinding = true; })
+                .AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                    options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
